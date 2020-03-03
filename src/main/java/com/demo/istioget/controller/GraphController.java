@@ -26,13 +26,15 @@ public class GraphController {
 	}
 
 	@RequestMapping("/graph")
-	public String graph() {
+	public String graph() throws Exception {
 		System.out.println("into graph");
 		JSONObject graphJson = getGraphFromKiali();
 		System.out.println(graphJson.get("elements").toString());
 		JSONObject graphRes = graphJson.getJSONObject("elements");
 		GraphAnalyzeHelper analyzer=new GraphAnalyzeHelper();
 		analyzer.analyzeJsonGraph(graphRes);
+		Double p90=FindLatency.SelectLatency("192.168.6.200","31957","hipster-is","frontend","checkoutservice","60m",0.9);
+		System.out.println(p90);
 		return graphRes.toString();
 	}
 
