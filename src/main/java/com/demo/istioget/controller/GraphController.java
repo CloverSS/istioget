@@ -25,17 +25,14 @@ public class GraphController {
 		return "this is istioget";
 	}
 
-	@RequestMapping("/graph")
-	public String graph() throws Exception {
+	static public Map<String,Node> get_nodes(String namespace) throws Exception {
 		System.out.println("into graph");
-		JSONObject graphJson = getGraphFromKiali();
+		JSONObject graphJson = getGraphFromKiali(namespace);
 		System.out.println(graphJson.get("elements").toString());
 		JSONObject graphRes = graphJson.getJSONObject("elements");
 		GraphAnalyzeHelper analyzer=new GraphAnalyzeHelper();
-		analyzer.analyzeJsonGraph(graphRes);
-		Double p90=FindLatency.SelectLatency("192.168.6.200","31957","hipster-is","frontend","checkoutservice","60m",0.9);
-		System.out.println(p90);
-		return graphRes.toString();
+		Map<String,Node> nodes=analyzer.analyzeJsonGraph(graphRes);
+		return nodes;
 	}
 
 	/*
@@ -46,8 +43,8 @@ public class GraphController {
 	 */
 	
 
-	private JSONObject getGraphFromKiali() {
-		String theUrl = "http://129.28.142.81:6105/kiali/api/namespaces/graph?graphType=service&namespaces=hipster-is";
+	static private JSONObject getGraphFromKiali(String namespace) {
+		String theUrl = "http://129.28.142.81:6105/kiali/api/namespaces/graph?graphType=service&namespaces="+namespace;
 		RestTemplate restTemplate = new RestTemplate();
 		try {
 			HttpHeaders headers = createHttpHeaders("admin", "admin");
@@ -64,7 +61,7 @@ public class GraphController {
 		}
 	}
 
-	private HttpHeaders createHttpHeaders(String user, String password) {
+	static private HttpHeaders createHttpHeaders(String user, String password) {
 		String notEncoded = user + ":" + password;
 		String encodedAuth = Base64.getEncoder().encodeToString(notEncoded.getBytes());
 		HttpHeaders headers = new HttpHeaders();

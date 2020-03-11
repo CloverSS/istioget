@@ -10,7 +10,7 @@ import javax.annotation.security.PermitAll;
 import javafx.util.Pair;
 
 public class Node {
-    class downstream{
+    public class downstream{
         String ds_id="";
         String ds_service="";
         String ds_protocol="";
@@ -85,6 +85,14 @@ public class Node {
         }
         else
             return -1.0;
+    }
+
+    public Map<String,Double> getDsstream(){
+        Map<String,Double> Dsstream=new HashMap<>();
+        for(downstream ds:downstreams){
+            Dsstream.put(ds.ds_service,ds.percentreq);
+        }
+        return Dsstream;
     }
 
     
