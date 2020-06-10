@@ -19,11 +19,11 @@ public class BaseConf{
         }
         return false;
     }
-    private static void init_instance(String ip,String k8s_port,String istio_port,String prom_port,String usr,String passwd){
+    private static void init_instance(String ip,String k8s_p,String istio_p,String prom_p,String usr,String passwd){
         istio_ip=ip;
-        k8s_port=k8s_port;
-        istio_port=istio_port;
-        prom_port=prom_port;
+        k8s_port=k8s_p;
+        istio_port=istio_p;
+        prom_port=prom_p;
         istio_usr=usr;
         istio_passwd=passwd;
     }

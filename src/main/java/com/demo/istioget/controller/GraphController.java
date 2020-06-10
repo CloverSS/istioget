@@ -4,6 +4,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.demo.istioget.conf.BaseConf;
 import com.demo.istioget.model.Node;
 
 import org.json.JSONArray;
@@ -44,14 +45,14 @@ public class GraphController {
 	
 
 	static private JSONObject getGraphFromKiali(String namespace) {
-		String theUrl = "http://129.28.142.81:6105/kiali/api/namespaces/graph?graphType=service&namespaces="+namespace;
+		String theUrl = "http://"+BaseConf.istio_ip+":"+BaseConf.istio_port+"/kiali/api/namespaces/graph?graphType=service&namespaces="+namespace;
 		RestTemplate restTemplate = new RestTemplate();
 		try {
 			HttpHeaders headers = createHttpHeaders("admin", "admin");
 			HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 			ResponseEntity<String> response = restTemplate.exchange(theUrl, HttpMethod.GET, entity, String.class);
 			JSONObject graphJson = new JSONObject(response.getBody());
-			System.out.println("Result - status (" + response.getStatusCode() + ") has body: " + response.hasBody());
+			//System.out.println("Result - status (" + response.getStatusCode() + ") has body: " + response.hasBody());
 			// System.out.println(response.getBody());
 			// System.out.println(graphJson.toString());
 			return graphJson;

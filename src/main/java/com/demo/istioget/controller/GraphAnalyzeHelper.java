@@ -68,7 +68,7 @@ public class GraphAnalyzeHelper {
 								}
 							}
 						}
-						System.out.println("service: " + service);
+						//System.out.println("service: " + service);
 						NodeMap.put(id, node);
 					}
 				}
@@ -133,7 +133,7 @@ public class GraphAnalyzeHelper {
 							}
 						}	
 						EdgeList.add(edge);
-						System.out.println("edges"+edge.getId());
+					//	System.out.println("edges"+edge.getId());
 					}
 				}
 			}

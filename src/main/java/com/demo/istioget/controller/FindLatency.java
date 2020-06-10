@@ -9,34 +9,37 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 class FindLatency {
-    static double SelectLatency(String ip,String port,String namespace,String source,String destina,String duration,Double percent) throws Exception
+    static double SelectLatency(String ip,String port,String namespace,String source,String destina,String duration,Double percent,long time) throws Exception
     {
-        String condition="reporter=\"distina\",destination_workload=~\""+destina+"\",source_workload=~\""+source+"\", destination_workload_namespace=~\""+namespace+"\"";
+        String condition="reporter=\"destination\",destination_workload=~\""+destina+"\",source_workload=~\""+source+"\", destination_workload_namespace=~\""+namespace+"\"";
         String query="histogram_quantile("+percent.toString()+",sum(rate(istio_request_duration_seconds_bucket{}["+duration+"]))by(le))";
-        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query;
-        System.out.println(theUrl);
+        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query+"&time="+time;
         JSONObject promRes=DoSelect(theUrl,condition);
         if(promRes.has("value"))
         {
             JSONArray promArray=promRes.getJSONArray("value");
-            return promArray.getDouble(1);
+            Double res=promArray.getDouble(1);
+           // System.out.println(res);
+            return res;
         }
         return 0.0;
     }
 
-    static double SelectLatency(String ip,String port,String namespace,String destina,String duration,Double percent) throws Exception
+    static double SelectLatency(String ip,String port,String namespace,String destina,String duration,Double percent,long time) throws Exception
     {
-        String condition="reporter=\"destina\",destination_workload=~\""+destina+"\",destination_workload_namespace=~\""+namespace+"\"";
-        String query="histogram_quantile("+percent.toString()+",sum(rate(istio_request_duration_seconds_bucket{}["+duration+"]))by(le))";
-        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query;
-        System.out.println(theUrl);
+        String condition="reporter=\"destination\",destination_workload=~\""+destina+"\",destination_workload_namespace=~\""+namespace+"\"";
+        String query="histogram_quantile("+percent.toString()+",sum(rate(istio_request_duration_seconds_bucket{"+condition+"}["+duration+"]))by(le))";
+        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query+"&time="+time;
         JSONObject promRes=DoSelect(theUrl,condition);
         if(promRes.has("value"))
         {
             JSONArray promArray=promRes.getJSONArray("value");
-            return promArray.getDouble(1);
+            Double res=promArray.getDouble(1);
+            return res;
         }
         return 0.0;
     }
@@ -47,13 +50,19 @@ class FindLatency {
 		try {
 		    //HttpHeaders headers = createHttpHeaders("admin", "admin");
 			//HttpEntity<String> entity = new HttpEntity<String>("parameters");
-            ResponseEntity<String> response = restTemplate.getForEntity(theUrl, String.class, condition);
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(theUrl);
+            UriComponents uriComponents = builder.build();
+            ResponseEntity<String> response = restTemplate.getForEntity(uriComponents.toUri(), String.class);
+            //System.out.println(response);
+            // ResponseEntity<String> response = restTemplate.getForEntity(theUrl, String.class, condition);
             if(response.hasBody()){
                 JSONObject promJson = new JSONObject(response.getBody());
-                System.out.println("Result - status (" + response.getStatusCode() + ") has body: " + response.hasBody());
+             //   System.out.println("Result - status (" + response.getStatusCode() + ") has body: " + response.hasBody());
                 if(promJson.has("data")){
                     if(promJson.getJSONObject("data").has("result")){
                         JSONArray promRes=promJson.getJSONObject("data").getJSONArray("result");
+                        if(promRes.isEmpty())
+                        	return new JSONObject();
                         return promRes.getJSONObject(0);
                     }
                 }     
