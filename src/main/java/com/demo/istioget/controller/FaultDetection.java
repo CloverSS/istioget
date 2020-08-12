@@ -4,11 +4,13 @@ package com.demo.istioget.controller;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.demo.istioget.conf.BaseConf;
 import com.demo.istioget.model.Node;
+import com.demo.istioget.model.Chain;
 
 class FaultDetection {
     public static void faultdetction(int type,Map<String,Node> nodes) throws Exception {
@@ -68,6 +70,9 @@ class FaultDetection {
         try{
         	Date day=new Date();    
         	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+        	ArrayList<HashMap<String,String>> tojson_nodes = new ArrayList<>();
+        	ArrayList<HashMap<String,String>> links = new ArrayList<>();
+        	
         	for(Node node:nodes.values()){
                 String namespace=node.getNamespace();  
                 String service=node.getSerivce();
@@ -77,7 +82,7 @@ class FaultDetection {
                 System.out.println("time: "+df.format(day)+" namespace: "+namespace+" Service_raw:"+service+" p90_1:"+p90_1+" p90_60："+p90_60);
                 if(p90_1/p90_60>2)
                 {
-                	 Map<String,Double> Dsstream=node.getDsstream();
+                	Map<String,Double> Dsstream=node.getDsstream();
                     for(Map.Entry<String, Double> entry : Dsstream.entrySet()){
                         String DSservice = entry.getKey();
                         Double DSpercent = entry.getValue();
@@ -87,8 +92,25 @@ class FaultDetection {
                         p90_60-=DSp90_60*DSpercent;
                     }
                     if(p90_1/p90_60>2)
+                    {
                         System.out.println("time "+df.format(day)+" namespace: "+namespace+" method_svclink Service_cap:"+service);
-                }}
+                        node.setType(false);
+                    }
+                 }
+                HashMap<String,String> nodemap = new HashMap<>();
+                nodemap.put("id", node.getId());
+                nodemap.put("name", node.getSerivce());
+                nodemap.put("type", node.getType()?"true":"false");  
+                tojson_nodes.add(nodemap);
+                
+                for(String target:node.getDstreamId()) {
+                	HashMap<String,String> linkmap = new HashMap<>();
+                	linkmap.put("source", node.getId());
+                	linkmap.put("target", target);
+                	links.add(linkmap);
+                }
+             }
+        	Chain.updata(tojson_nodes, links);
         }catch(Exception err){
             System.out.println(err);
         }

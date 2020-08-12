@@ -62,7 +62,7 @@ class DetectTask extends TimerTask {
 		try {
 			get_namespaces(BaseConf.istio_ip, BaseConf.k8s_port);
 			for (String namespace : namespaceList) {
-				// if(!namespace.equals("hipste-b")) continue;
+				if(!namespace.equals("hipste-is")) continue;
 				System.out.println(namespace);
 				Map<String, Node> nodes = GraphController.get_nodes(namespace);
 				FaultDetection.faultdetction(2, nodes);

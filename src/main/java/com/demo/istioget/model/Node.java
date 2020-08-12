@@ -16,6 +16,7 @@ public class Node {
         String ds_protocol="";
         Double percentreq=0.0;
         Double rate=0.0;
+         
         public downstream(String id,String svc,String pro,Double per,Double rate){
             this.ds_id=id;
             this.ds_service=svc;
@@ -27,6 +28,8 @@ public class Node {
     private String id="";
     private String service="";
     private String namespace="";
+    private boolean type = true;
+    
     private Map<String,Pair<Double,Double>> traffic=new HashMap<>();
     private List<downstream> downstreams=new ArrayList<>();
    // private Map<
@@ -55,7 +58,15 @@ public class Node {
     {
         traffic.put(protocol,new Pair<>(in,out));
     }
-
+    
+    public void setType(boolean is) {
+    	this.type = is;
+    }
+    
+    public boolean getType() {
+    	return this.type;
+    }
+    
     public String getId(){
         return this.id;
     }
@@ -85,6 +96,14 @@ public class Node {
         }
         else
             return -1.0;
+    }
+    
+    public ArrayList<String> getDstreamId() {
+    	ArrayList<String> list = new ArrayList<>();
+    	for(downstream ds:downstreams){
+    		list.add(ds.ds_id);
+    	}
+    	return list;
     }
 
     public Map<String,Double> getDsstream(){

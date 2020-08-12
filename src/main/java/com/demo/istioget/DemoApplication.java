@@ -11,8 +11,9 @@ import com.demo.istioget.controller.*;
 public class DemoApplication {
 
 	public static void main(String[] args) {
+		System.out.println("start");
 		SpringApplication.run(DemoApplication.class, args);
-		BaseConf.init("192.168.6.18","6448","32018","31458","admin","admin");
+		BaseConf.init("192.168.6.100","6448","30241","30799","admin","admin");
 		Detector detector=new Detector();
 		detector.startDetect();
 	}
