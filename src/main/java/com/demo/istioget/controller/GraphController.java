@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.demo.istioget.conf.BaseConf;
+import com.demo.istioget.model.Chain;
 import com.demo.istioget.model.Node;
 
 import org.json.JSONArray;
@@ -14,7 +15,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,6 +27,12 @@ public class GraphController {
 	@RequestMapping("/")
 	public String home() {
 		return "this is istioget";
+	}
+	
+	@CrossOrigin
+	@RequestMapping("/chain")
+	public String chain(@RequestParam String namespace) {
+		return Chain.getJsonRes(namespace);
 	}
 
 	static public Map<String,Node> get_nodes(String namespace) throws Exception {

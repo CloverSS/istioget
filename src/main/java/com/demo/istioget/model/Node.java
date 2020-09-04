@@ -28,7 +28,7 @@ public class Node {
     private String id="";
     private String service="";
     private String namespace="";
-    private boolean type = true;
+    private String type = "";
     
     private Map<String,Pair<Double,Double>> traffic=new HashMap<>();
     private List<downstream> downstreams=new ArrayList<>();
@@ -59,11 +59,11 @@ public class Node {
         traffic.put(protocol,new Pair<>(in,out));
     }
     
-    public void setType(boolean is) {
+    public void setType(String is) {
     	this.type = is;
     }
     
-    public boolean getType() {
+    public String getType() {
     	return this.type;
     }
     

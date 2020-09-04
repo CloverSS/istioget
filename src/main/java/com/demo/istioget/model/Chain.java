@@ -2,27 +2,34 @@ package com.demo.istioget.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.xml.stream.events.Namespace;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Chain {
-	private static String JsonRes;
+	private static ConcurrentHashMap<String,String> JsonRes = new ConcurrentHashMap<>();
 	
-	public static String getJsonRes() {
-		return JsonRes;
+	public static String getJsonRes(String namespace) {
+		return JsonRes.get(namespace);
 	}
 	
-	public static void updata(ArrayList<HashMap<String,String>> nodes, ArrayList<HashMap<String,String>> links) {
+	public static void updata(String namespace, ArrayList<HashMap<String,String>> nodes, ArrayList<HashMap<String,String>> links) {
 		JSONArray jsonNodes = new JSONArray();
 		JSONArray jsonLinks = new JSONArray();
 		for(HashMap<String, String> node : nodes) {
 			JSONObject obj = new JSONObject();
-			int type = 0;
+			String type = "normal";
 			if(node.containsKey("type")&&node.get("type").equals("1"))
-				type = 1;
+				type = "overload";
+			else if(node.containsKey("type")&&node.get("type").equals("2"))
+				type = "overcapacity";
 			obj.put("id", node.containsKey("id")?node.get("id"):"");
-			obj.put("name", node.containsKey("name")?node.get("name"):"");
+			obj.put("name", node.containsKey("name")?node.get("name"):"unknown");
+			obj.put("latency60", node.containsKey("latency60")?node.get("latency60"):"");
+			obj.put("latency1", node.containsKey("latency1")?node.get("latency1"):"");
 			obj.put("type", type);
 			jsonNodes.put(obj);
 		}
@@ -38,6 +45,9 @@ public class Chain {
 		JSONObject dataRes = new JSONObject();
 		dataRes.put("nodes", jsonNodes);
 		dataRes.put("links", jsonLinks);
-		JsonRes = dataRes.toString();
+		JSONObject response = new JSONObject();
+		response.put("code", 200);
+		response.put("data", dataRes);
+		JsonRes.put(namespace, response.toString());
 	}
 }

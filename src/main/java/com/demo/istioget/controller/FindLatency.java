@@ -13,6 +13,21 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 class FindLatency {
+	static double SelectQps(String ip,String port,String namespace,String service_name,String duration) {
+		 	String condition="destination_service_name=~\""+service_name+"\",destination_service_namespace=~\"";
+	        String query="round(sum(irate(istio_requests_tota{}["+duration+"])),0.01)";
+	        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query;
+	        JSONObject promRes=DoSelect(theUrl,condition);
+	        if(promRes.has("value"))
+	        {
+	            JSONArray promArray=promRes.getJSONArray("value");
+	            Double res=promArray.getDouble(1);
+	           // System.out.println(res);
+	            return res;
+	        }
+	        return 0.0;
+	}
+	
     static double SelectLatency(String ip,String port,String namespace,String source,String destina,String duration,Double percent,long time) throws Exception
     {
         String condition="reporter=\"destination\",destination_workload=~\""+destina+"\",source_workload=~\""+source+"\", destination_workload_namespace=~\""+namespace+"\"";

@@ -38,13 +38,13 @@ class DetectTask extends TimerTask {
 	private boolean get_namespaces(String ip, String port) {
 		System.out.println("start get namespaces");
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/namespaces";
-		System.out.println(theUrl);
+	//	System.out.println(theUrl);
 		RestTemplate restTemplate = new RestTemplate();
 		try {
 			ResponseEntity<String> response = restTemplate.getForEntity(theUrl, String.class);
 			if (response.hasBody()) {
-				System.out.println(response.getStatusCode());
-				System.out.println(response.getBody());
+				//System.out.println(response.getStatusCode());
+				//System.out.println(response.getBody());
 				JSONObject rawJson = new JSONObject(response.getBody());
 				if (rawJson.has("items")) {
 					parse_namespaces(rawJson.getJSONArray("items"));
@@ -62,10 +62,10 @@ class DetectTask extends TimerTask {
 		try {
 			get_namespaces(BaseConf.istio_ip, BaseConf.k8s_port);
 			for (String namespace : namespaceList) {
-				if(!namespace.equals("hipste-is")) continue;
+				if(!namespace.equals("hipster-is")) continue;
 				System.out.println(namespace);
 				Map<String, Node> nodes = GraphController.get_nodes(namespace);
-				FaultDetection.faultdetction(2, nodes);
+				FaultDetection.faultdetction(3, nodes);
 				/*	new Thread() {
 						public void run() {
 							try {
