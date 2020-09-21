@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.demo.istioget.conf.BaseConf;
 import com.demo.istioget.model.Node;
+import com.demo.istioget.utils.KeyServicePost;
 import com.demo.istioget.model.Chain;
 
 class FaultDetection {
@@ -94,8 +95,8 @@ class FaultDetection {
 						"60m");
 				Double latencyp90_1 = p90_1;
 				Double latencyp90_60 = p90_60;
-				System.out.println("time: " + df.format(day) + " namespace: " + namespace + " Service_raw:" + service
-						+ " p90_1:" + p90_1 + " p90_60：" + p90_60);
+			//	System.out.println("time: " + df.format(day) + " namespace: " + namespace + " Service_raw:" + service
+			//			+ " p90_1:" + p90_1 + " p90_60：" + p90_60);
 
 				Map<String, Double> Dsstream = node.getDsstream();
 				for (Map.Entry<String, Double> entry : Dsstream.entrySet()) {
@@ -110,10 +111,18 @@ class FaultDetection {
 				}
 				if (p90_1 / p90_60 > 2 && latencyp90_1 / latencyp90_60 > 2) {
 					System.out.println("time " + df.format(day) + " namespace: " + namespace
-							+ " method_svclink Service_cap:" + service);
+							+ " method_svclink Service overload:" + service);
+					
 					node.setType("1");
 				}else if(qps_60m/qps_1m > 1.2) {
+					System.out.println("time " + df.format(day) + " namespace: " + namespace
+							+ " method_svclink Service Overcapacity:" + service);
 					node.setType("2");
+				}
+				
+				if(node.getType().equals("1")||node.getType().equals("2")||node.getSerivce().equals("cartservice")) {
+					System.out.println("put key service : type ="+node.getType()+node.getSerivce());
+					KeyServicePost.putKeyService(namespace, node.getSerivce(), timenow);
 				}
 				
 				HashMap<String, String> nodemap = new HashMap<>();

@@ -8,6 +8,10 @@ import java.util.TimerTask;
 
 import com.demo.istioget.conf.BaseConf;
 import com.demo.istioget.model.Node;
+import com.demo.istioget.utils.K8sApiClient;
+
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceList;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,9 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 class DetectTask extends TimerTask {
-	private List<String> namespaceList = new ArrayList<>();
+	//private List<String> namespaceList = new ArrayList<>();
 
-	private void parse_namespaces(JSONArray nsJson) {
+	/*private void parse_namespaces(JSONArray nsJson) {
 		for (int i = 0; i < nsJson.length(); i++) {
 			JSONObject rawNs = nsJson.getJSONObject(i);
 			if (rawNs.has("metadata")) {
@@ -56,15 +60,13 @@ class DetectTask extends TimerTask {
 			System.out.println(e);
 		}
 		return false;
-	}
+	}*/
 
 	public void run() {
 		try {
-			get_namespaces(BaseConf.istio_ip, BaseConf.k8s_port);
-			for (String namespace : namespaceList) {
-				if(!namespace.equals("hipster-is")) continue;
-				System.out.println(namespace);
-				Map<String, Node> nodes = GraphController.get_nodes(namespace);
+			NamespaceList namespaceList= K8sApiClient.getNamespace();
+			for (Namespace ns:namespaceList.getItems()) {
+				Map<String, Node> nodes = GraphController.get_nodes(ns.getMetadata().getName());
 				FaultDetection.faultdetction(3, nodes);
 				/*	new Thread() {
 						public void run() {

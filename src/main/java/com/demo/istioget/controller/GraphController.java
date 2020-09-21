@@ -35,8 +35,8 @@ public class GraphController {
 		return Chain.getJsonRes(namespace);
 	}
 
-	static public Map<String,Node> get_nodes(String namespace) throws Exception {
-		System.out.println("into graph");
+	public static Map<String,Node> get_nodes(String namespace) throws Exception {
+		System.out.println("into graph "+namespace);
 		JSONObject graphJson = getGraphFromKiali(namespace);
 		System.out.println(graphJson.get("elements").toString());
 		JSONObject graphRes = graphJson.getJSONObject("elements");
@@ -53,7 +53,7 @@ public class GraphController {
 	 */
 	
 
-	static private JSONObject getGraphFromKiali(String namespace) {
+	 private static JSONObject getGraphFromKiali(String namespace) {
 		String theUrl = "http://"+BaseConf.istio_ip+":"+BaseConf.istio_port+"/kiali/api/namespaces/graph?graphType=service&namespaces="+namespace;
 		RestTemplate restTemplate = new RestTemplate();
 		try {
@@ -61,9 +61,6 @@ public class GraphController {
 			HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 			ResponseEntity<String> response = restTemplate.exchange(theUrl, HttpMethod.GET, entity, String.class);
 			JSONObject graphJson = new JSONObject(response.getBody());
-			//System.out.println("Result - status (" + response.getStatusCode() + ") has body: " + response.hasBody());
-			// System.out.println(response.getBody());
-			// System.out.println(graphJson.toString());
 			return graphJson;
 		} catch (Exception eek) {
 			System.out.println("** Exception: " + eek.getMessage());
