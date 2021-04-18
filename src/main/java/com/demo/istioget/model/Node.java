@@ -29,6 +29,11 @@ public class Node {
     private String service="";
     private String namespace="";
     private String type = "";
+    private Double pearson = 0.0;
+    private Double perSum = 0.0;
+    private Double throughput = 0.0;
+    private Double latency_now = 0.0;
+    private boolean root = false;
     
     private Map<String,Pair<Double,Double>> traffic=new HashMap<>();
     private List<downstream> downstreams=new ArrayList<>();
@@ -46,6 +51,7 @@ public class Node {
     }
 
     public void addDownstream(String id,String svc,String pro,Double per,Double rate){
+    	this.perSum = per/rate;
         downstreams.add(new downstream(id, svc, pro, per, rate));
     }
 
@@ -61,6 +67,22 @@ public class Node {
     
     public void setType(String is) {
     	this.type = is;
+    }
+    
+    public void setPearson(Double pearson) {
+    	this.pearson = pearson;
+    }
+    
+    public void setPerSum(Double perSum) {
+    	this.perSum = perSum;
+    }
+    
+    public void setLatency_now(Double latency_now) {
+    	this.latency_now = latency_now;
+    }
+    
+    public void setThroughput(Double throughput) {
+    	this.throughput = throughput;
     }
     
     public String getType() {
@@ -79,6 +101,21 @@ public class Node {
         return this.namespace;
     }
 
+    public Double getPearson(){
+        return this.pearson;
+    }
+    
+    public Double getPerSum(){
+        return this.perSum;
+    }
+
+    public Double getThroughPut(){
+        return this.throughput;
+    }
+
+    public Double getLatency_now(){
+        return this.latency_now;
+    }
 
     public Double getTrafficIn(String protocol){
         if(traffic.containsKey(protocol))
@@ -105,6 +142,14 @@ public class Node {
     	}
     	return list;
     }
+    
+    public HashMap<String, Double> getDstreamRate() {
+    	HashMap<String, Double> map = new HashMap<>();
+    	for(downstream ds:downstreams){
+    		map.put(ds.ds_id, ds.rate);
+    	}
+    	return map;
+    }
 
     public Map<String,Double> getDsstream(){
         Map<String,Double> Dsstream=new HashMap<>();
@@ -114,5 +159,12 @@ public class Node {
         return Dsstream;
     }
 
+    public void setRoot() {
+    	this.root = true;
+    }
+    
+    public boolean isRoot() {
+    	return this.root;
+    }
     
 }

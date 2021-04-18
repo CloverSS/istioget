@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.demo.istioget.conf.BaseConf;
 import com.demo.istioget.model.Node;
+import com.demo.istioget.utils.K8sApiClient;
 import com.demo.istioget.utils.KeyServicePost;
 import com.demo.istioget.model.Chain;
 
@@ -86,17 +87,19 @@ class FaultDetection {
 				long timenow = (new Date().getTime()) / 1000;
 				Double p90_1 = FindLatency.SelectLatency(BaseConf.istio_ip, BaseConf.prom_port, namespace, service,
 						"1m", 0.90, timenow);
-				Double p90_60 = FindLatency.SelectLatency(BaseConf.istio_ip, BaseConf.prom_port, namespace, service,
-						"60m", 0.90, timenow - 60 * 60);
+				Double p90_60 = FindLatency.SelectAvgLatency(BaseConf.istio_ip, BaseConf.prom_port, namespace, service,
+						"60m", 0.90, timenow);
 				
 				Double qps_1m = FindLatency.SelectQps(BaseConf.istio_ip, BaseConf.prom_port, namespace, service,
 						"1m");
-				Double qps_60m = FindLatency.SelectQps(BaseConf.istio_ip, BaseConf.prom_port, namespace, service,
-						"60m");
+				Double qps_60m = FindLatency.SelectMaxQps(BaseConf.istio_ip, BaseConf.prom_port, namespace, service,
+						"10m");
+				System.out.println("time: " + df.format(day) + " namespace: " + namespace + " Service_raw:" + service
+						+ " qps_1m:" + qps_1m + " qps_60m：" + qps_60m);
 				Double latencyp90_1 = p90_1;
 				Double latencyp90_60 = p90_60;
-			//	System.out.println("time: " + df.format(day) + " namespace: " + namespace + " Service_raw:" + service
-			//			+ " p90_1:" + p90_1 + " p90_60：" + p90_60);
+				//System.out.println("time: " + df.format(day) + " namespace: " + namespace + " Service_raw:" + service
+				//		+ " p90_1:" + p90_1 + " p90_60：" + p90_60);
 
 				Map<String, Double> Dsstream = node.getDsstream();
 				for (Map.Entry<String, Double> entry : Dsstream.entrySet()) {
@@ -105,22 +108,22 @@ class FaultDetection {
 					Double DSp90_1 = FindLatency.SelectLatency(BaseConf.istio_ip, BaseConf.prom_port, namespace,
 							service, DSservice, "1m", 0.90, timenow);
 					Double DSp90_60 = FindLatency.SelectLatency(BaseConf.istio_ip, BaseConf.prom_port, namespace,
-							service, DSservice, "60m", 0.90, timenow - 60 * 60);
+							service, DSservice, "60m", 0.90, timenow);
 					p90_1 -= DSp90_1 * DSpercent;
 					p90_60 -= DSp90_60 * DSpercent;
 				}
 				if (p90_1 / p90_60 > 2 && latencyp90_1 / latencyp90_60 > 2) {
-					System.out.println("time " + df.format(day) + " namespace: " + namespace
+					System.out.println("Type1 time " + df.format(day) + " namespace: " + namespace
 							+ " method_svclink Service overload:" + service);
 					
 					node.setType("1");
 				}else if(qps_60m/qps_1m > 1.2) {
-					System.out.println("time " + df.format(day) + " namespace: " + namespace
+					System.out.println("Type2 time " + df.format(day) + " namespace: " + namespace
 							+ " method_svclink Service Overcapacity:" + service);
 					node.setType("2");
 				}
 				
-				if(node.getType().equals("1")||node.getType().equals("2")||node.getSerivce().equals("cartservice")) {
+				if(node.getType().equals("1")||node.getType().equals("2")) {
 					System.out.println("put key service : type ="+node.getType()+node.getSerivce());
 					KeyServicePost.putKeyService(namespace, node.getSerivce(), timenow);
 				}
@@ -131,6 +134,7 @@ class FaultDetection {
 				nodemap.put("latency1", latencyp90_1.toString());
 				nodemap.put("latency60", latencyp90_60.toString());
 				nodemap.put("type", node.getType());
+				nodemap.put("podCount", K8sApiClient.getReplicas(namespace, service).toString());
 				tojson_nodes.add(nodemap);
 
 				for (String target : node.getDstreamId()) {

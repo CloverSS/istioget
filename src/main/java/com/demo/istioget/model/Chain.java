@@ -30,6 +30,7 @@ public class Chain {
 			obj.put("name", node.containsKey("name")?node.get("name"):"unknown");
 			obj.put("latency60", node.containsKey("latency60")?node.get("latency60"):"");
 			obj.put("latency1", node.containsKey("latency1")?node.get("latency1"):"");
+			obj.put("podCount", node.containsKey("podCount")?node.get("podCount"):"");
 			obj.put("type", type);
 			jsonNodes.put(obj);
 		}
@@ -50,4 +51,5 @@ public class Chain {
 		response.put("data", dataRes);
 		JsonRes.put(namespace, response.toString());
 	}
+	
 }

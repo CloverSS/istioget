@@ -2,6 +2,8 @@ package com.demo.istioget.controller;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
@@ -13,75 +15,194 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 class FindLatency {
-	static double SelectQps(String ip,String port,String namespace,String service_name,String duration) {
-		 	String condition="destination_service_name=~\""+service_name+"\",destination_service_namespace=~\"";
-	        String query="round(sum(irate(istio_requests_tota{}["+duration+"])),0.01)";
-	        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query;
-	        JSONObject promRes=DoSelect(theUrl,condition);
-	        if(promRes.has("value"))
-	        {
-	            JSONArray promArray=promRes.getJSONArray("value");
-	            Double res=promArray.getDouble(1);
-	           // System.out.println(res);
-	            return res;
-	        }
-	        return 0.0;
+	static double SelectQps(String ip, String port, String namespace, String service_name, String duration) {
+		String condition = "destination_service_name=~\"" + service_name + "\",destination_service_namespace=~\""
+				+ namespace + "\"";
+		String query = "round(sum(irate(istio_requests_total{" + condition + "}[" + duration + "])),0.01)";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query;
+		JSONObject promRes = DoSelect(theUrl, condition);
+		//System.out.println(theUrl);
+		if (promRes.has("value")) {
+			JSONArray promArray = promRes.getJSONArray("value");
+			if (promArray.getString(1).equals("NaN")) {
+
+			} else {
+				Double res = promArray.getDouble(1);
+				// System.out.println(res);
+				return res;
+			}
+		}
+		return 0.0;
 	}
 	
-    static double SelectLatency(String ip,String port,String namespace,String source,String destina,String duration,Double percent,long time) throws Exception
-    {
-        String condition="reporter=\"destination\",destination_workload=~\""+destina+"\",source_workload=~\""+source+"\", destination_workload_namespace=~\""+namespace+"\"";
-        String query="histogram_quantile("+percent.toString()+",sum(rate(istio_request_duration_seconds_bucket{}["+duration+"]))by(le))";
-        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query+"&time="+time;
-        JSONObject promRes=DoSelect(theUrl,condition);
-        if(promRes.has("value"))
-        {
-            JSONArray promArray=promRes.getJSONArray("value");
-            Double res=promArray.getDouble(1);
-           // System.out.println(res);
-            return res;
-        }
-        return 0.0;
-    }
+	static ArrayList<Double> SelectQpsList(String ip, String port, String namespace, String service_name, String duration, long time) {
+		ArrayList<Double> Res = new ArrayList<Double>();
+		String condition = "destination_service_name=~\"" + service_name + "\",destination_service_namespace=~\""
+				+ namespace + "\"";
+		String query = "round(sum(irate(istio_requests_total{" + condition + "}[" + duration + "])),0.01)";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query_range?query=" + query + "&start="
+				+ (time - 60 * 10) + "&end=" + time + "&step=30";
+		JSONObject promRes = DoSelect(theUrl, condition);
+		//System.out.println(theUrl);
+		try {
+			if (promRes.has("values")) {
+				JSONArray promArray = promRes.getJSONArray("values");
+				for (int i = 0; i < promArray.length(); i++) {
+					JSONArray value = promArray.getJSONArray(i);
+					Res.add(value.getDouble(1));
+				}
+			}
+		} catch (Exception err) {
+			System.out.println(err);
+			System.out.println(promRes.toString());
+		}
+		return Res;
+	}
 
-    static double SelectLatency(String ip,String port,String namespace,String destina,String duration,Double percent,long time) throws Exception
-    {
-        String condition="reporter=\"destination\",destination_workload=~\""+destina+"\",destination_workload_namespace=~\""+namespace+"\"";
-        String query="histogram_quantile("+percent.toString()+",sum(rate(istio_request_duration_seconds_bucket{"+condition+"}["+duration+"]))by(le))";
-        String theUrl="http://"+ip+":"+port+"/api/v1/query?query="+query+"&time="+time;
-        JSONObject promRes=DoSelect(theUrl,condition);
-        if(promRes.has("value"))
-        {
-            JSONArray promArray=promRes.getJSONArray("value");
-            Double res=promArray.getDouble(1);
-            return res;
-        }
-        return 0.0;
-    }
+	static double SelectMaxQps(String ip, String port, String namespace, String service_name, String duration) {
+		String condition = "destination_service_name=~\"" + service_name + "\",destination_service_namespace=~\""
+				+ namespace + "\"";
+		String query = "max_over_time(round(sum(irate(istio_requests_total{" + condition + "}[1m])),0.01)[" + duration
+				+ ":])";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query;
+		System.out.println(theUrl);
+		JSONObject promRes = DoSelect(theUrl, condition);
+		if (promRes.has("value")) {
+			JSONArray promArray = promRes.getJSONArray("value");
+			if (promArray.getString(1).equals("NaN")) {
 
-    private static JSONObject DoSelect(String theUrl,String condition) {
-		//String theUrl = "http://129.28.142.81:6105/kiali/api/namespaces/graph?graphType=service&namespaces=hipster-is";
+			} else {
+				Double res = promArray.getDouble(1);
+				// System.out.println(res);
+				return res;
+			}
+		}
+		return 0.0;
+	}
+
+	static double SelectLatency(String ip, String port, String namespace, String source, String destina,
+			String duration, Double percent, long time) throws Exception {
+		String condition = "reporter=\"destination\",destination_workload=~\"" + destina + "\",source_workload=~\""
+				+ source + "\", destination_workload_namespace=~\"" + namespace + "\"";
+		String query = "histogram_quantile(" + percent.toString() + ",sum(rate(istio_request_duration_seconds_bucket{}["
+				+ duration + "]))by(le))";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query + "&time=" + time;
+		JSONObject promRes = DoSelect(theUrl, condition);
+		// System.out.println(promRes.toString());
+		if (promRes.has("value")) {
+			JSONArray promArray = promRes.getJSONArray("value");
+			if (promArray.getString(1).equals("NaN")) {
+
+			} else {
+				Double res = promArray.getDouble(1);
+				// System.out.println(res);
+				return res;
+			}
+		}
+		return 0.0;
+	}
+
+	static double SelectAvgLatency(String ip, String port, String namespace, String destina, String duration,
+			Double percent, long time) throws Exception {
+		String condition = "reporter=\"destination\",destination_workload=~\"" + destina
+				+ "\", destination_workload_namespace=~\"" + namespace + "\"";
+		String query = "sum_over_time(histogram_quantile(" + percent.toString()
+				+ ",sum(rate(istio_request_duration_seconds_bucket{" + condition + "}[1m]))by(le))[" + duration
+				+ ":])/count_over_time(histogram_quantile(" + percent.toString()
+				+ ",sum(rate(istio_request_duration_seconds_bucket{" + condition + "}[1m]))by(le))[" + duration + ":])";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query + "&time=" + time;
+		// System.out.println(theUrl);
+		JSONObject promRes = DoSelect(theUrl, condition);
+		// System.out.println(promRes.toString());
+		if (promRes.has("value")) {
+			JSONArray promArray = promRes.getJSONArray("value");
+			if (promArray.getString(1).equals("NaN")) {
+
+			} else {
+				Double res = promArray.getDouble(1);
+				// System.out.println(res);
+				return res;
+			}
+		}
+		return 0.0;
+	}
+
+	static double SelectLatency(String ip, String port, String namespace, String destina, String duration,
+			Double percent, long time) throws Exception {
+		String condition = "reporter=\"destination\",destination_workload=~\"" + destina
+				+ "\",destination_workload_namespace=~\"" + namespace + "\"";
+		String query = "histogram_quantile(" + percent.toString() + ",sum(rate(istio_request_duration_seconds_bucket{"
+				+ condition + "}[" + duration + "]))by(le))";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query + "&time=" + time;
+		JSONObject promRes = DoSelect(theUrl, condition);
+		try {
+			if (promRes.has("value")) {
+				JSONArray promArray = promRes.getJSONArray("value");
+				if (promArray.getString(1).equals("NaN")) {
+
+				} else {
+					Double res = promArray.getDouble(1);
+					return res;
+				}
+			}
+		} catch (Exception err) {
+			System.out.println(err);
+			System.out.println(promRes.toString());
+		}
+		return 0.0;
+	}
+
+	static ArrayList<Double> SelectLatencyList(String ip, String port, String namespace, String destina,
+			String duration, Double percent, long time) throws Exception {
+		ArrayList<Double> Res = new ArrayList<Double>();
+		String condition = "reporter=\"destination\",destination_workload=~\"" + destina
+				+ "\",destination_workload_namespace=~\"" + namespace + "\"";
+		String query = "histogram_quantile(" + percent.toString() + ",sum(rate(istio_request_duration_seconds_bucket{"
+				+ condition + "}[" + duration + "]))by(le))";
+		String theUrl = "http://" + ip + ":" + port + "/api/v1/query_range?query=" + query + "&start="
+				+ (time - 60 * 60) + "&end=" + time + "&step=30";
+		JSONObject promRes = DoSelect(theUrl, condition);
+		try {
+			if (promRes.has("values")) {
+				JSONArray promArray = promRes.getJSONArray("values");
+				for (int i = 0; i < promArray.length(); i++) {
+					JSONArray value = promArray.getJSONArray(i);
+					Res.add(value.getDouble(1));
+				}
+			}
+		} catch (Exception err) {
+			System.out.println(err);
+			System.out.println(promRes.toString());
+		}
+		return Res;
+	}
+
+	private static JSONObject DoSelect(String theUrl, String condition) {
+		// String theUrl =
+		// "http://129.28.142.81:6105/kiali/api/namespaces/graph?graphType=service&namespaces=hipster-is";
 		RestTemplate restTemplate = new RestTemplate();
 		try {
-		    //HttpHeaders headers = createHttpHeaders("admin", "admin");
-			//HttpEntity<String> entity = new HttpEntity<String>("parameters");
+			// HttpHeaders headers = createHttpHeaders("admin", "admin");
+			// HttpEntity<String> entity = new HttpEntity<String>("parameters");
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(theUrl);
-            UriComponents uriComponents = builder.build();
-            ResponseEntity<String> response = restTemplate.getForEntity(uriComponents.toUri(), String.class);
-            //System.out.println(response);
-            // ResponseEntity<String> response = restTemplate.getForEntity(theUrl, String.class, condition);
-            if(response.hasBody()){
-                JSONObject promJson = new JSONObject(response.getBody());
-             //   System.out.println("Result - status (" + response.getStatusCode() + ") has body: " + response.hasBody());
-                if(promJson.has("data")){
-                    if(promJson.getJSONObject("data").has("result")){
-                        JSONArray promRes=promJson.getJSONObject("data").getJSONArray("result");
-                        if(promRes.isEmpty())
-                        	return new JSONObject();
-                        return promRes.getJSONObject(0);
-                    }
-                }     
-            }
+			UriComponents uriComponents = builder.build();
+			ResponseEntity<String> response = restTemplate.getForEntity(uriComponents.toUri(), String.class);
+			// System.out.println(response);
+			// ResponseEntity<String> response = restTemplate.getForEntity(theUrl,
+			// String.class, condition);
+			if (response.hasBody()) {
+				JSONObject promJson = new JSONObject(response.getBody());
+				// System.out.println("Result - status (" + response.getStatusCode() + ") has
+				// body: " + response.hasBody());
+				if (promJson.has("data")) {
+					if (promJson.getJSONObject("data").has("result")) {
+						JSONArray promRes = promJson.getJSONObject("data").getJSONArray("result");
+						if (promRes.isEmpty())
+							return new JSONObject();
+						return promRes.getJSONObject(0);
+					}
+				}
+			}
 			// System.out.println(response.getBody());
 			// System.out.println(graphJson.toString());
 			return null;

@@ -65,9 +65,11 @@ class DetectTask extends TimerTask {
 	public void run() {
 		try {
 			NamespaceList namespaceList= K8sApiClient.getNamespace();
-			for (Namespace ns:namespaceList.getItems()) {
-				Map<String, Node> nodes = GraphController.get_nodes(ns.getMetadata().getName());
-				FaultDetection.faultdetction(3, nodes);
+			//for (Namespace ns:namespaceList.getItems()) {
+				//Map<String, Node> nodes = GraphController.get_nodes(ns.getMetadata().getName());
+				Map<String, Node> nodes = GraphController.get_nodes("hipster-is-old");
+				AbnormalDetect.Detect(nodes);
+				//FaultDetection.faultdetction(3, nodes);
 				/*	new Thread() {
 						public void run() {
 							try {
@@ -108,7 +110,7 @@ class DetectTask extends TimerTask {
 						}
 					}.start();*/
 				
-			}
+			//}
 		} catch (Exception e) {
 			System.out.println(e);
 		}
@@ -122,6 +124,6 @@ public class Detector {
 
 	public void startDetect() {
 		Timer timer = new Timer();
-		timer.schedule(new DetectTask(), 0, 10 * 1000);
+		timer.schedule(new DetectTask(), 0, 30 * 1000);
 	}
 }
