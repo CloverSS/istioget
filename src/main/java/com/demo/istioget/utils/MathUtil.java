@@ -5,22 +5,23 @@ import java.util.PriorityQueue;
 
 public class MathUtil {
 
-	public static Double getAvg(PriorityQueue<Double> q) {
+	public static Double getAvg(ArrayList<Double> array) {
 		Double sum = 0.0;
-		Object[] array = q.toArray();
-		for(int i=4;i<array.length-5;i++) {
-			sum += (Double)array[i];
+		
+		for(int i=4;i<array.size()-5;i++) {
+			sum += array.get(i);
+			
 		}
-		return sum/Math.max(1,array.length-10);
+     	return sum/Math.max(1,array.size()-10);
 	}
 	
-	public static Double getSigma(PriorityQueue<Double> q, Double avg) {
+	public static Double getSigma(ArrayList<Double> array, Double avg) {
 		Double sigma = 0.0;
-		Object[] array = q.toArray();
-		for(int i=4;i<array.length-5;i++)  {
-			sigma += ((Double)array[i]-avg)*((Double)array[i]-avg);
+		
+		for(int i=4;i<array.size()-5;i++)  {
+			sigma += (array.get(i)-avg)*(array.get(i)-avg);
 		}	
-		sigma = Math.sqrt(sigma)/Math.max(1,array.length-10);
+		sigma = Math.sqrt(sigma)/Math.max(1,array.size()-10);
 		return sigma;
 	}
 }

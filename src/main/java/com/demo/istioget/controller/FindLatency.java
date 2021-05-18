@@ -2,6 +2,7 @@ package com.demo.istioget.controller;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
@@ -16,11 +17,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 class FindLatency {
 	static double SelectQps(String ip, String port, String namespace, String service_name, String duration) {
-		String condition = "destination_service_name=~\"" + service_name + "\",destination_service_namespace=~\""
+		String condition = "destination_service_name=~\"" + service_name + "\",reporter=\"destination\", destination_service_namespace=~\""
 				+ namespace + "\"";
 		String query = "round(sum(irate(istio_requests_total{" + condition + "}[" + duration + "])),0.01)";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query;
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		//System.out.println(theUrl);
 		if (promRes.has("value")) {
 			JSONArray promArray = promRes.getJSONArray("value");
@@ -37,12 +38,12 @@ class FindLatency {
 	
 	static ArrayList<Double> SelectQpsList(String ip, String port, String namespace, String service_name, String duration, long time) {
 		ArrayList<Double> Res = new ArrayList<Double>();
-		String condition = "destination_service_name=~\"" + service_name + "\",destination_service_namespace=~\""
+		String condition = "destination_service_name=~\"" + service_name + "\",reporter=\"destination\",destination_service_namespace=~\""
 				+ namespace + "\"";
 		String query = "round(sum(irate(istio_requests_total{" + condition + "}[" + duration + "])),0.01)";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query_range?query=" + query + "&start="
 				+ (time - 60 * 10) + "&end=" + time + "&step=30";
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		//System.out.println(theUrl);
 		try {
 			if (promRes.has("values")) {
@@ -66,7 +67,7 @@ class FindLatency {
 				+ ":])";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query;
 		System.out.println(theUrl);
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		if (promRes.has("value")) {
 			JSONArray promArray = promRes.getJSONArray("value");
 			if (promArray.getString(1).equals("NaN")) {
@@ -87,7 +88,7 @@ class FindLatency {
 		String query = "histogram_quantile(" + percent.toString() + ",sum(rate(istio_request_duration_seconds_bucket{}["
 				+ duration + "]))by(le))";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query + "&time=" + time;
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		// System.out.println(promRes.toString());
 		if (promRes.has("value")) {
 			JSONArray promArray = promRes.getJSONArray("value");
@@ -112,7 +113,7 @@ class FindLatency {
 				+ ",sum(rate(istio_request_duration_seconds_bucket{" + condition + "}[1m]))by(le))[" + duration + ":])";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query + "&time=" + time;
 		// System.out.println(theUrl);
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		// System.out.println(promRes.toString());
 		if (promRes.has("value")) {
 			JSONArray promArray = promRes.getJSONArray("value");
@@ -134,7 +135,7 @@ class FindLatency {
 		String query = "histogram_quantile(" + percent.toString() + ",sum(rate(istio_request_duration_seconds_bucket{"
 				+ condition + "}[" + duration + "]))by(le))";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query?query=" + query + "&time=" + time;
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		try {
 			if (promRes.has("value")) {
 				JSONArray promArray = promRes.getJSONArray("value");
@@ -161,13 +162,14 @@ class FindLatency {
 				+ condition + "}[" + duration + "]))by(le))";
 		String theUrl = "http://" + ip + ":" + port + "/api/v1/query_range?query=" + query + "&start="
 				+ (time - 60 * 60) + "&end=" + time + "&step=30";
-		JSONObject promRes = DoSelect(theUrl, condition);
+		JSONObject promRes = DoSelect(theUrl);
 		try {
 			if (promRes.has("values")) {
 				JSONArray promArray = promRes.getJSONArray("values");
 				for (int i = 0; i < promArray.length(); i++) {
 					JSONArray value = promArray.getJSONArray(i);
-					Res.add(value.getDouble(1));
+					if(!value.get(1).equals("NaN"))
+						Res.add(value.getDouble(1));
 				}
 			}
 		} catch (Exception err) {
@@ -176,8 +178,34 @@ class FindLatency {
 		}
 		return Res;
 	}
+	
+	static String SelectPodCount(String ip, String port, String Namespace, String Service, Long StartTime, Long EndTime) {
+		JSONObject dataRes = new JSONObject();
+		JSONArray jsonTime = new JSONArray();
+		JSONArray jsonNum = new JSONArray();
+        String query = "sum(kube_pod_info{created_by_name=~\"" + Service + ".*\", namespace=~\"" + Namespace + "\"})";
+        String theUrl = "http://" + ip + ":" + port + "/api/v1/query_range?query=" + query + "&start="
+                + StartTime + "&end=" + EndTime + "&step=30s";
 
-	private static JSONObject DoSelect(String theUrl, String condition) {
+        JSONObject promRes = DoSelect(theUrl);
+        SimpleDateFormat Dateformat =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //设置格式
+       // System.out.println(promRes.toString());
+        if (promRes.has("values")) {
+            JSONArray promArray = promRes.getJSONArray("values");
+            for (int i = 0; i < promArray.length(); i++) {
+                JSONArray datapoint = promArray.getJSONArray(i);
+                Long timePoint = datapoint.getLong(0);
+                String numpoint = datapoint.getString(1);
+                jsonTime.put(Dateformat.format(timePoint*1000));
+                jsonNum.put(numpoint);
+            }
+        } 
+        dataRes.put("time", jsonTime);
+        dataRes.put("num", jsonNum);
+        return dataRes.toString();
+    }
+	
+	private static JSONObject DoSelect(String theUrl) {
 		// String theUrl =
 		// "http://129.28.142.81:6105/kiali/api/namespaces/graph?graphType=service&namespaces=hipster-is";
 		RestTemplate restTemplate = new RestTemplate();
@@ -211,4 +239,6 @@ class FindLatency {
 			return null;
 		}
 	}
+	
+	
 }

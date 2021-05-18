@@ -33,6 +33,7 @@ public class Node {
     private Double perSum = 0.0;
     private Double throughput = 0.0;
     private Double latency_now = 0.0;
+    private Double latency_avg = 0.0;
     private boolean root = false;
     
     private Map<String,Pair<Double,Double>> traffic=new HashMap<>();
@@ -81,6 +82,10 @@ public class Node {
     	this.latency_now = latency_now;
     }
     
+    public void setLatency_avg(Double latency_avg) {
+    	this.latency_avg = latency_avg;
+    }
+    
     public void setThroughput(Double throughput) {
     	this.throughput = throughput;
     }
@@ -115,6 +120,10 @@ public class Node {
 
     public Double getLatency_now(){
         return this.latency_now;
+    }
+
+    public Double getLatency_avg(){
+        return this.latency_avg;
     }
 
     public Double getTrafficIn(String protocol){

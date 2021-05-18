@@ -36,22 +36,22 @@ public class KeyServicePost {
 
 	private static ConcurrentHashMap<KeyService, Long> opeMap = new ConcurrentHashMap<>();
 
-	public static void putKeyService(String namespace, String svcName, Long timestamp) {
+	public static void putKeyService(String namespace, String svcName, Double upPoint, Integer type, Long timestamp) {
 		KeyService keyservice = new KeyService(namespace, svcName);
-		if (!opeMap.containsKey(keyservice) || timestamp - opeMap.get(keyservice) > 5 * 60) {
+		if (!opeMap.containsKey(keyservice) || timestamp - opeMap.get(keyservice) >  60) {
 			opeMap.put(keyservice, timestamp);
-			PostToPredict(namespace, svcName);
+			PostToPredict(namespace, svcName, upPoint, type);
 		}
 	}
 
-	private static void PostToPredict(String namespace, String svcName) {
+	private static void PostToPredict(String namespace, String svcName, Double upPoint, Integer type) {
 		String theUrl = "http://localhost:" + BaseConf.scaleservice_ip
-				+ "/scale?namespace="+namespace+"&svcName="+svcName+"&type=cpu";
+				+ "/scale?namespace="+namespace+"&svcName="+svcName+"&upPoint="+upPoint+"&scaleType="+type+"&type=cpu";
 		RestTemplate restTemplate = new RestTemplate();
-		LinkedMultiValueMap body=new LinkedMultiValueMap<>();
+		/*LinkedMultiValueMap body=new LinkedMultiValueMap<>();
 	    body.add("namespace", namespace);
 	    body.add("svcName", svcName);
-	    body.add("type", "cpu");
+	    body.add("type", "cpu");*/
 	   try {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);

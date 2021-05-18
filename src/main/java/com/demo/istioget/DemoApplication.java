@@ -17,7 +17,7 @@ public class DemoApplication {
 	public static void main(String[] args) {
 		System.out.println("start");
 		SpringApplication.run(DemoApplication.class, args);
-		BaseConf.init("192.168.6.100","6448","30241","30799","admin","admin","8091");
+		BaseConf.init("192.168.6.100","6448","31919", "30241","30799","admin","admin","8091");
 		Detector detector=new Detector();
 		detector.startDetect();
 	}

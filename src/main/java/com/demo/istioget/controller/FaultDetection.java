@@ -125,14 +125,14 @@ class FaultDetection {
 				
 				if(node.getType().equals("1")||node.getType().equals("2")) {
 					System.out.println("put key service : type ="+node.getType()+node.getSerivce());
-					KeyServicePost.putKeyService(namespace, node.getSerivce(), timenow);
+					KeyServicePost.putKeyService(namespace, node.getSerivce(), 0.0, 2, timenow);
 				}
 				
 				HashMap<String, String> nodemap = new HashMap<>();
 				nodemap.put("id", node.getId());
 				nodemap.put("name", node.getSerivce().equals("")?"unknown":node.getSerivce());
-				nodemap.put("latency1", latencyp90_1.toString());
-				nodemap.put("latency60", latencyp90_60.toString());
+				nodemap.put("latency1", String.format("%.2f", latencyp90_1));
+				nodemap.put("latency60", String.format("%.2f", latencyp90_60));
 				nodemap.put("type", node.getType());
 				nodemap.put("podCount", K8sApiClient.getReplicas(namespace, service).toString());
 				tojson_nodes.add(nodemap);
@@ -144,7 +144,7 @@ class FaultDetection {
 					links.add(linkmap);
 				}
 			}
-			Chain.updata(namespace, tojson_nodes, links);
+			//Chain.updata(namespace, tojson_nodes, links);
 		} catch (Exception err) {
 			System.out.println(err);
 		}
@@ -175,7 +175,7 @@ class FaultDetection {
 								service, DSservice, "1m", 0.50, timenow);
 						p90 -= DSp90 * DSpercent;
 						p50 -= DSp50 * DSpercent;
-					}
+					}  
 					if (p90 / p50 > 2)
 						System.out.println("time " + df.format(day) + " namespace: " + namespace
 								+ " method_complink Service_cap:" + service);

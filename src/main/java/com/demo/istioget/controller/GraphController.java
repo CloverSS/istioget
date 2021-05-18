@@ -1,6 +1,7 @@
 package com.demo.istioget.controller;
-
+import com.demo.istioget.controller.*;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +35,15 @@ public class GraphController {
 	public String chain(@RequestParam String namespace) {
 		return Chain.getJsonRes(namespace);
 	}
+	
+
+	@CrossOrigin
+	@RequestMapping("/podNum")
+	public String podNum(@RequestParam String namespace,@RequestParam String deployment, @RequestParam Long interval) {
+		Long timenow = (new Date().getTime()) / 1000;
+		return FindLatency.SelectPodCount(BaseConf.istio_ip, BaseConf.monitoring_port, namespace, deployment, timenow-interval*60, timenow);
+	}
+
 
 	public static Map<String,Node> get_nodes(String namespace) throws Exception {
 		System.out.println("into graph "+namespace);
